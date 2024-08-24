@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Document</title>
+</head>
+<body>
+    
+    <div class="w-full bg-zinc-500">
+        <div class="parent h-[700vh] relative top-0 left-0 w-full bg-zinc-300">
+            <div class="h-screen w-full sticky top-0 left-0">
+                <canvas class="w-full h-screen" id="frame"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" integrity="sha512-onMTRKJBKz8M1TnqqDuGBlowlH0ohFzMXYRNebz+yOcc5TQr/zAKsthzhuv0hiyUKEiQEQXEynnXCvNTOk50dg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        const canvas = document.querySelector('canvas');
+        const context = canvas.getContext('2d');
+
+        const endPoints = {
+            min : 1,
+            max : 382
+        };
+
+        let imagesLoaded = 0;
+        const images = [];
+
+        function preLoadImages() {
+            for (let i = 1; i <= endPoints.max; i++) {
+                const imageUrl = `./frames/frame_${i.toString().padStart(4,'0')}.jpeg`
+                const img = new Image();
+                img.src = imageUrl;
+                img.onload = () => {
+                    imagesLoaded++;
+                    if (imagesLoaded === endPoints.max) {
+                        loadImages(endPoints.min);
+                        startAnimation();
+                    }
+                }
+                images.push(img);
+            }
+        }
+
+        function loadImages(startIndex){
+            if (startIndex >= 0 && startIndex <= endPoints.max) {
+                const currentImage = images[startIndex-1];
+
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                const scaleX = canvas.width / currentImage.width;
+                const scaleY = canvas.height / currentImage.height;
+                const scale = Math.max(scaleX, scaleY);
+
+                const newHeight = currentImage.height * scale;
+                const newWidth = currentImage.width * scale;
+
+                const offSetX = (canvas.width - newWidth)/2;
+                const offSetY = (canvas.height - newHeight)/2;
+
+                context.clearRect(0,0,canvas.width,canvas.height);
+                context.imageSmoothingEnabled = true;
+                context.imageSmoothingQuality = 'high';
+                context.drawImage(currentImage,offSetX,offSetY, newWidth,newHeight);
+                endPoints.min = startIndex;
+            }            
+        }
+
+        function startAnimation() {
+            var tl = gsap.timeline({
+                scrollTrigger : {
+                    trigger : '.parent',
+                    start : 'top top',
+                    scrub : 2,
+                    // markers : true
+                }
+            });
+
+            tl.to(endPoints, {
+                min : endPoints.max,
+                onUpdate : function(){
+                    loadImages(Math.floor(endPoints.min));
+                }
+            })
+        }
+
+        preLoadImages();
+
+    </script>
+</body>
+</html>
